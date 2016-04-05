@@ -1,5 +1,6 @@
 package ro.pub.cs.systems.pdsd.lab06.clientservercommunication.views;
 
+import java.io.BufferedReader;
 import java.net.Socket;
 
 import ro.pub.cs.systems.pdsd.lab06.clientservercommunication.R;
@@ -34,7 +35,34 @@ public class ClientFragment extends Fragment {
 				// - get the BufferedReader object in order to read from the socket (use Utilities.getReader())
 				// - while the line that was read is not null (EOF was not sent), append the content to serverMessageTextView (on UI thread !!!)
 				// - close the socket to the server	
-
+				
+				serverMessageTextView.post(new Runnable() {
+					@Override
+					public void run() {
+						serverMessageTextView.setText("");
+					}
+				});
+				
+				socket = new Socket (
+						serverAddressEditText.getText().toString(),
+						Integer.parseInt(serverPortEditText.getText().toString())
+						);
+				
+				Log.v(Constants.TAG, "Connected to: "+socket.getInetAddress()+":"+socket.getLocalPort());
+				BufferedReader bufferedReader = ro.pub.cs.systems.pdsd.lab06.clientservercommunication.general.Utilities.getReader(socket);
+				String line;
+				while ((line = bufferedReader.readLine()) != null) {
+						Log.v(Constants.TAG, "A line has been read from FTP server: "+line);
+						final String finalizedLine = line;
+						serverMessageTextView.post(new Runnable() {
+						@Override
+							public void run() {
+							serverMessageTextView.append(finalizedLine + "\n");
+							}
+						});
+					}
+				socket.close();
+				Log.v(Constants.TAG,"Connection Closed");
 			} catch (Exception exception) {
 				Log.e(Constants.TAG, "An exception has occurred: "+exception.getMessage());
 				if (Constants.DEBUG) {
